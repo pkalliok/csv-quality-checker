@@ -7,13 +7,17 @@ errors = {}
 parser = argparse.ArgumentParser(description="""
 A utility script for finding signs of data errors in tabular data""")
 parser.add_argument('csvfile', metavar='file.csv', help='data file to analyse')
+parser.add_argument('--null-threshold', metavar='x', type=float, default=0.5,
+        help='maximum ratio of nulls to other rows to produce a warning')
+parser.add_argument('--stray-threshold', metavar='x', type=int, default=2,
+        help='number or rows with same value that are still considered stray')
 
 def main(args):
     with open(args.csvfile) as f:
         reader = csv.reader(f, delimiter=';')
         line_count, line_lens, value_distr, value_len_distr = \
                 read_quality_data(reader)
-    check_quality(line_count, line_lens, value_distr, value_len_distr)
+    check_quality(args, line_count, line_lens, value_distr, value_len_distr)
     multiple_errors()
 
 def read_quality_data(reader):
@@ -28,23 +32,23 @@ def read_quality_data(reader):
                     {}).setdefault(len(row[field]), []).append(line_count)
     return (line_count, line_lens, value_distr, value_len_distr)
 
-def check_quality(line_count, line_lens, value_distr, value_len_distr):
+def check_quality(args, line_count, line_lens, value_distr, value_len_distr):
     if line_count <= 1: warn("very few lines", line_count, [])
-    check_freqs(line_lens, line_count, "field count")
+    check_freqs(args, line_lens, line_count, "field count")
     for field in value_distr:
-        check_freqs(value_distr[field], line_count,
+        check_freqs(args, value_distr[field], line_count,
                 "field %d" % (field+1))
     for field in value_len_distr:
-        check_freqs(value_len_distr[field], line_count,
+        check_freqs(args, value_len_distr[field], line_count,
                 "length of field %d" % (field+1))
 
-def check_freqs(distr, total, target):
+def check_freqs(args, distr, total, target):
     nulls = len(distr.get('', []))
-    if nulls > 0 and nulls < total * .5:
+    if nulls > 0 and nulls < total * args.null_threshold:
         warn(target + " has null value(s)", nulls, distr[''])
     if seems_enumerated(distr):
         for value in distr:
-            if len(distr[value]) < 3:
+            if len(distr[value]) <= args.stray_threshold:
                 warn(target + " has a stray value", value, distr[value])
     else: print(target + " does not seem to have a set of common values")
 
