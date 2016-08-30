@@ -9,8 +9,14 @@ A utility script for finding signs of data errors in tabular data""")
 parser.add_argument('csvfile', metavar='file.csv', help='data file to analyse')
 parser.add_argument('--null-threshold', metavar='x', type=float, default=0.5,
         help='maximum ratio of nulls to other rows to produce a warning')
-parser.add_argument('--stray-threshold', metavar='x', type=int, default=2,
-        help='number or rows with same value that are still considered stray')
+parser.add_argument('--stray-threshold', metavar='n', type=int, default=2,
+        help='number or rows with a common value that are still considered stray')
+parser.add_argument('--code-count', metavar='n', type=int, default=10,
+        help='how many most common values to look at when deciding whether a field is a codeset field')
+parser.add_argument('--code-ratio', metavar='x', type=float, default=0.9,
+        help='how much of rows should the most common values cover for a field to be considered a codeset field')
+parser.add_argument('--multiple-threshold', metavar='n', type=int, default=2,
+        help='minimum number of errors a line should have to have "multiple" errors')
 
 def main(args):
     with open(args.csvfile) as f:
@@ -18,7 +24,7 @@ def main(args):
         line_count, line_lens, value_distr, value_len_distr = \
                 read_quality_data(reader)
     check_quality(args, line_count, line_lens, value_distr, value_len_distr)
-    multiple_errors()
+    multiple_errors(args)
 
 def read_quality_data(reader):
     line_count, line_lens, value_distr, value_len_distr = 0, {}, {}, {}
@@ -46,15 +52,15 @@ def check_freqs(args, distr, total, target):
     nulls = len(distr.get('', []))
     if nulls > 0 and nulls < total * args.null_threshold:
         warn(target + " has null value(s)", nulls, distr[''])
-    if seems_enumerated(distr):
+    if seems_enumerated(args, distr):
         for value in distr:
             if len(distr[value]) <= args.stray_threshold:
                 warn(target + " has a stray value", value, distr[value])
     else: print(target + " does not seem to have a set of common values")
 
-def seems_enumerated(distr):
+def seems_enumerated(args, distr):
     freqs = sorted(len(v) for v in distr.values())
-    return sum(freqs[-10:]) > sum(freqs) * .9
+    return sum(freqs[-abs(args.code_count):]) > sum(freqs) * args.code_ratio
 
 def warn(issue, value, lines):
     for line in lines:
@@ -63,9 +69,9 @@ def warn(issue, value, lines):
     print("Warning: %s (%s), on lines: %s" %
             (issue, str(value), ', '.join(str(l) for l in lines)))
 
-def multiple_errors():
+def multiple_errors(args):
     for l in sorted(errors.keys()):
-        if len(errors[l]) > 1:
+        if len(errors[l]) >= args.multiple_threshold:
             print("line %d, multiple errors: %s" % (l, ', '.join(errors[l])))
 
 if __name__ == '__main__':
