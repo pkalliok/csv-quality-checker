@@ -47,10 +47,9 @@ def check_freqs(distr, total, target):
 
 def seems_enumerated(distr):
     freqs = sorted(len(v) for v in distr.values())
-    total = sum(freqs)
-    if total < 15: return false
-    most_common_total = sum(freqs[-10:])
-    return most_common_total > total * .9
+    if len(freqs) <= 1: return True # constant field
+    if sum(freqs[:-1]) < 15: return False # too few values to tell
+    return sum(freqs[-10:]) > sum(freqs) * .9
 
 def warn(issue, value, lines):
     for line in lines:
