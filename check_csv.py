@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
-import sys, csv
+import sys, csv, argparse
 
 errors = {}
-#errprint = sys.stderr.write
 
-def main(filename):
-    with open(filename) as f:
+parser = argparse.ArgumentParser(description="""
+A utility script for finding signs of data errors in tabular data""")
+parser.add_argument('csvfile', metavar='file.csv', help='data file to analyse')
+
+def main(args):
+    with open(args.csvfile) as f:
         reader = csv.reader(f, delimiter=';')
         line_count, line_lens, value_distr, value_len_distr = \
                 read_quality_data(reader)
@@ -62,5 +65,5 @@ def multiple_errors():
             print("line %d, multiple errors: %s" % (l, ', '.join(errors[l])))
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main(parser.parse_args())
 
