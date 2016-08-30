@@ -32,6 +32,7 @@ The field is usually of some specific length, but has an atypical length
 on some rows.  Usually a sign of a typo, or mixup in fields.
 
 > field _n_ does not seem to have a set of common values
+>
 > length of field _n_ does not seem to have a set of common values
 
 Not really a warning, but just a mention that the field seems to be free
