@@ -47,8 +47,6 @@ def check_freqs(distr, total, target):
 
 def seems_enumerated(distr):
     freqs = sorted(len(v) for v in distr.values())
-    if len(freqs) <= 1: return True # constant field
-    if sum(freqs[:-1]) < 15: return False # too few values to tell
     return sum(freqs[-10:]) > sum(freqs) * .9
 
 def warn(issue, value, lines):
