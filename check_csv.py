@@ -7,6 +7,12 @@ errors = {}
 parser = argparse.ArgumentParser(description="""
 A utility script for finding signs of data errors in tabular data""")
 parser.add_argument('csvfile', metavar='file.csv', help='data file to analyse')
+parser.add_argument('-d', '--csv-delimiter', metavar='char', type=str,
+        default=',', help='character used to delimit fields in CSV')
+parser.add_argument('--csv-quote', metavar='char', type=str,
+        default='"', help='character used to surround (text) fields in CSV')
+parser.add_argument('--csv-dialect', metavar='dialect', type=str,
+        default='excel', help='CSV dialect (default excel)')
 parser.add_argument('--null-threshold', metavar='x', type=float, default=0.5,
         help='maximum ratio of nulls to other rows to produce a warning')
 parser.add_argument('--stray-threshold', metavar='n', type=int, default=2,
@@ -20,7 +26,8 @@ parser.add_argument('--multiple-threshold', metavar='n', type=int, default=2,
 
 def main(args):
     with open(args.csvfile) as f:
-        reader = csv.reader(f, delimiter=';')
+        reader = csv.reader(f, dialect=args.csv_dialect,
+                delimiter=args.csv_delimiter, quotechar=args.csv_quote)
         line_count, line_lens, value_distr, value_len_distr = \
                 read_quality_data(reader)
     check_quality(args, line_count, line_lens, value_distr, value_len_distr)
