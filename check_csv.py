@@ -72,7 +72,7 @@ def seems_enumerated(args, distr):
 def warn(issue, value, lines):
     for line in lines:
         errors.setdefault(line, []).append(issue)
-    if len(lines) > 5: lines = lines[:5] + ['...']
+    if len(lines) > 6: lines = lines[:5] + ['...']
     print("Warning: %s (%s), on lines: %s" %
             (issue, str(value), ', '.join(str(l) for l in lines)))
 
